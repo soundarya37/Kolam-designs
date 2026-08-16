@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kolam Weaver — a pulli kolam maker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Karla:wght@400;500;700&display=swap');
+
+  :root{
+    --bg-deep:#0c1712;
+    --bg-mid:#132018;
+    --bg-panel:#17251c;
+    --gold:#d9a441;
+    --gold-soft:#f0cc7e;
+    --leaf:#5a8a67;
+    --leaf-dim:#345040;
+    --cream:#ece3ce;
+    --cream-dim:#a9a794;
+    --dot-off:rgba(236,227,206,0.22);
+    --dot-off-ring:rgba(236,227,206,0.35);
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at 50% -10%, #1c2e21 0%, transparent 55%),
+      var(--bg-deep);
+    color:var(--cream);
+    font-family:'Karla', sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:32px 16px 56px;
+  }
+
+  .wrap{
+    width:100%;
+    max-width:640px;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom:22px;
+  }
+
+  .eyebrow{
+    font-family:'Karla', sans-serif;
+    font-size:11px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:var(--leaf);
+    margin:0 0 6px;
+  }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-style:normal;
+    font-size:34px;
+    margin:0 0 8px;
+    color:var(--cream);
+    letter-spacing:0.01em;
+  }
+
+  .sub{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:400;
+    font-size:15px;
+    color:var(--cream-dim);
+    margin:0;
+    line-height:1.5;
+  }
+
+  .stage{
+    position:relative;
+    background:var(--bg-mid);
+    border:1px solid var(--leaf-dim);
+    border-radius:6px;
+    padding:22px;
+    margin:26px 0 18px;
+  }
+
+  .corner{
+    position:absolute;
+    width:34px;
+    height:34px;
+    opacity:0.85;
+    pointer-events:none;
+  }
+  .corner svg{ width:100%; height:100%; }
+  .corner.tl{ top:8px; left:8px; }
+  .corner.tr{ top:8px; right:8px; transform:scaleX(-1); }
+  .corner.bl{ bottom:8px; left:8px; transform:scaleY(-1); }
+  .corner.br{ bottom:8px; right:8px; transform:scale(-1,-1); }
+
+  canvas{
+    display:block;
+    width:100%;
+    height:auto;
+    touch-action:none;
+    cursor:pointer;
+    border-radius:3px;
+  }
+
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    justify-content:center;
+    margin-bottom:14px;
+  }
+
+  button{
+    font-family:'Karla', sans-serif;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    padding:10px 18px;
+    border-radius:100px;
+    border:1px solid var(--leaf-dim);
+    background:var(--bg-panel);
+    color:var(--cream);
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  button:hover{
+    border-color:var(--gold);
+    color:var(--gold-soft);
+  }
+  button:active{ transform:scale(0.97); }
+  button.primary{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:#221708;
+  }
+  button.primary:hover{
+    background:var(--gold-soft);
+    border-color:var(--gold-soft);
+    color:#221708;
+  }
+
+  .grid-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    margin-bottom:20px;
+    font-size:13px;
+    color:var(--cream-dim);
+  }
+  .grid-row input[type=range]{
+    accent-color:var(--gold);
+    width:140px;
+  }
+  .grid-row span{ color:var(--cream); font-weight:700; min-width:16px; text-align:center; }
+
+  footer{
+    text-align:center;
+    font-size:12.5px;
+    color:var(--cream-dim);
+    line-height:1.6;
+  }
+  footer strong{ color:var(--gold-soft); font-weight:700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Pulli Kolam</p>
+    <h1>Kolam Weaver</h1>
+    <p class="sub">Tap the dots to wake them, then watch the thread find its way home.</p>
+  </header>
+
+  <div class="grid-row">
+    <label for="sizeSlider">Grid</label>
+    <input type="range" id="sizeSlider" min="5" max="11" step="2" value="7">
+    <span id="sizeLabel">7×7</span>
+  </div>
+
+  <div class="stage">
+    <div class="corner tl"><svg viewBox="0 0 40 40"><path d="M2 38 Q2 10 30 8 M30 8 Q20 8 18 18 M30 8 Q30 18 20 20" fill="none" stroke="#5a8a67" stroke-width="2" stroke-linecap="round"/><circle cx="30" cy="8" r="2.4" fill="#d9a441"/></svg></div>
+    <div class="corner tr"><svg viewBox="0 0 40 40"><path d="M2 38 Q2 10 30 8 M30 8 Q20 8 18 18 M30 8 Q30 18 20 20" fill="none" stroke="#5a8a67" stroke-width="2" stroke-linecap="round"/><circle cx="30" cy="8" r="2.4" fill="#d9a441"/></svg></div>
+    <div class="corner bl"><svg viewBox="0 0 40 40"><path d="M2 38 Q2 10 30 8 M30 8 Q20 8 18 18 M30 8 Q30 18 20 20" fill="none" stroke="#5a8a67" stroke-width="2" stroke-linecap="round"/><circle cx="30" cy="8" r="2.4" fill="#d9a441"/></svg></div>
+    <div class="corner br"><svg viewBox="0 0 40 40"><path d="M2 38 Q2 10 30 8 M30 8 Q20 8 18 18 M30 8 Q30 18 20 20" fill="none" stroke="#5a8a67" stroke-width="2" stroke-linecap="round"/><circle cx="30" cy="8" r="2.4" fill="#d9a441"/></svg></div>
+    <canvas id="kolam"></canvas>
+  </div>
+
+  <div class="controls">
+    <button class="primary" id="diamondBtn">Diamond bloom</button>
+    <button id="frameBtn">Square frame</button>
+    <button id="crossBtn">Cross bloom</button>
+    <button id="mandalaBtn">Symmetric mandala</button>
+  </div>
+  <div class="controls">
+    <button id="randomBtn">Scatter dots</button>
+    <button id="fillBtn">Wake all</button>
+    <button id="clearBtn">Clear</button>
+  </div>
+
+  <footer>Click any <strong>dot</strong> to toggle it on. Whenever four neighbouring dots are all awake, a loop of thread wraps around them automatically — that's the kolam logic behind every festival threshold drawing.</footer>
+
+</div>
+
+<script>
+(function(){
+  var canvas = document.getElementById('kolam');
+  var ctx = canvas.getContext('2d');
+  var sizeSlider = document.getElementById('sizeSlider');
+  var sizeLabel = document.getElementById('sizeLabel');
+
+  var n = parseInt(sizeSlider.value, 10);
+  var active = [];
+  var dpr = Math.max(1, window.devicePixelRatio || 1);
+  var cssSize = 560;
+  var pad = 34;
+
+  function initGrid(){
+    active = [];
+    for (var i = 0; i < n; i++){
+      var row = [];
+      for (var j = 0; j < n; j++) row.push(false);
+      active.push(row);
+    }
+  }
+  initGrid();
+
+  function resize(){
+    var maxW = Math.min(window.innerWidth - 16 - 44 - 44, 560);
+    cssSize = Math.max(260, maxW);
+    canvas.style.width = cssSize + 'px';
+    canvas.style.height = cssSize + 'px';
+    canvas.width = Math.round(cssSize * dpr);
+    canvas.height = Math.round(cssSize * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+
+  function spacing(){
+    return (cssSize - pad * 2) / (n - 1);
+  }
+
+  function dotPos(i, j){
+    var s = spacing();
+    return { x: pad + i * s, y: pad + j * s };
+  }
+
+  function drawDots(){
+    for (var i = 0; i < n; i++){
+      for (var j = 0; j < n; j++){
+        var p = dotPos(i, j);
+        var on = active[i][j];
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, on ? 4.2 : 3.4, 0, Math.PI * 2);
+        if (on){
+          ctx.fillStyle = '#f0cc7e';
+          ctx.shadowColor = 'rgba(240,204,126,0.55)';
+          ctx.shadowBlur = 6;
+        } else {
+          ctx.fillStyle = 'rgba(236,227,206,0.22)';
+          ctx.shadowBlur = 0;
+        }
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+  }
+
+  function drawLoopForCell(i, j){
+    var s = spacing();
+    var A = dotPos(i, j);
+    var B = dotPos(i + 1, j);
+    var Cc = dotPos(i + 1, j + 1);
+    var Dd = dotPos(i, j + 1);
+    var r = s / 2;
+
+    var T = { x: A.x + r, y: A.y };
+    var R = { x: B.x, y: B.y + r };
+    var Bm = { x: Dd.x + r, y: Dd.y };
+    var L = { x: A.x, y: A.y + r };
+
+    function ang(center, pt){ return Math.atan2(pt.y - center.y, pt.x - center.x); }
+
+    ctx.beginPath();
+    ctx.moveTo(T.x, T.y);
+    ctx.arc(B.x, B.y, r, ang(B, T), ang(B, R), false);
+    ctx.arc(Cc.x, Cc.y, r, ang(Cc, R), ang(Cc, Bm), false);
+    ctx.arc(Dd.x, Dd.y, r, ang(Dd, Bm), ang(Dd, L), false);
+    ctx.arc(A.x, A.y, r, ang(A, L), ang(A, T), false);
+    ctx.closePath();
+
+    ctx.lineWidth = 2.2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(217,164,65,0.9)';
+    ctx.shadowColor = 'rgba(217,164,65,0.35)';
+    ctx.shadowBlur = 5;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  function draw(){
+    ctx.clearRect(0, 0, cssSize, cssSize);
+    for (var i = 0; i < n - 1; i++){
+      for (var j = 0; j < n - 1; j++){
+        if (active[i][j] && active[i+1][j] && active[i][j+1] && active[i+1][j+1]){
+          drawLoopForCell(i, j);
+        }
+      }
+    }
+    drawDots();
+  }
+
+  function toggleNearest(clientX, clientY){
+    var rect = canvas.getBoundingClientRect();
+    var x = clientX - rect.left;
+    var y = clientY - rect.top;
+    var s = spacing();
+    var best = null, bestDist = 999;
+    for (var i = 0; i < n; i++){
+      for (var j = 0; j < n; j++){
+        var p = dotPos(i, j);
+        var d = Math.hypot(p.x - x, p.y - y);
+        if (d < bestDist){ bestDist = d; best = [i, j]; }
+      }
+    }
+    if (best && bestDist < s * 0.45){
+      active[best[0]][best[1]] = !active[best[0]][best[1]];
+      draw();
+    }
+  }
+
+  canvas.addEventListener('click', function(e){
+    toggleNearest(e.clientX, e.clientY);
+  });
+  canvas.addEventListener('touchstart', function(e){
+    if (e.touches.length){
+      toggleNearest(e.touches[0].clientX, e.touches[0].clientY);
+    }
+    e.preventDefault();
+  }, { passive:false });
+
+  sizeSlider.addEventListener('input', function(){
+    n = parseInt(sizeSlider.value, 10);
+    sizeLabel.textContent = n + '\u00d7' + n;
+    initGrid();
+    resize();
+  });
+
+  var center = (n - 1) / 2;
+
+  document.getElementById('diamondBtn').addEventListener('click', function(){
+    center = (n - 1) / 2;
+    var R = Math.floor(n / 2);
+    for (var i = 0; i < n; i++){
+      for (var j = 0; j < n; j++){
+        active[i][j] = (Math.abs(i - center) + Math.abs(j - center)) <= R;
+      }
+    }
+    draw();
+  });
+
+  document.getElementById('frameBtn').addEventListener('click', function(){
+    var band = n >= 9 ? 2 : 1;
+    for (var i = 0; i < n; i++){
+      for (var j = 0; j < n; j++){
+        var distEdge = Math.min(i, n - 1 - i, j, n - 1 - j);
+        active[i][j] = distEdge <= band;
+      }
+    }
+    draw();
+  });
+
+  document.getElementById('crossBtn').addEventListener('click', function(){
+    center = (n - 1) / 2;
+    var arm = n >= 9 ? 1 : 1;
+    for (var i = 0; i < n; i++){
+      for (var j = 0; j < n; j++){
+        active[i][j] = Math.abs(i - center) <= arm || Math.abs(j - center) <= arm;
+      }
+    }
+    draw();
+  });
+
+  document.getElementById('mandalaBtn').addEventListener('click', function(){
+    center = (n - 1) / 2;
+    var half = Math.ceil(n / 2);
+    var seed = [];
+    for (var i = 0; i < half; i++){
+      seed.push([]);
+      for (var j = 0; j < half; j++){
+        seed[i].push(Math.random() < 0.55);
+      }
+    }
+    for (var i = 0; i < n; i++){
+      for (var j = 0; j < n; j++){
+        var qi = i <= center ? Math.round(center - i) : Math.round(i - center);
+        var qj = j <= center ? Math.round(center - j) : Math.round(j - center);
+        qi = Math.min(qi, half - 1);
+        qj = Math.min(qj, half - 1);
+        active[i][j] = seed[qi][qj];
+      }
+    }
+    draw();
+  });
+
+  document.getElementById('randomBtn').addEventListener('click', function(){
+    var density = 0.62;
+    for (var i = 0; i < n; i++){
+      for (var j = 0; j < n; j++){
+        active[i][j] = Math.random() < density;
+      }
+    }
+    draw();
+  });
+
+  document.getElementById('fillBtn').addEventListener('click', function(){
+    for (var i = 0; i < n; i++){
+      for (var j = 0; j < n; j++){
+        active[i][j] = true;
+      }
+    }
+    draw();
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', function(){
+    initGrid();
+    draw();
+  });
+
+  window.addEventListener('resize', resize);
+  resize();
+})();
+</script>
+</body>
+</html>
